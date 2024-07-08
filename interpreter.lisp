@@ -677,17 +677,25 @@ the last one."
                (bind-tag first marker rest environment))
               ((atom first)
                (warn "Non-symbol atom ~A in TAGBODY" first))))
+      ;; The outer loop runs until a control transfer happens or until the end
+      ;; of the TAGBODY is reached. The inner loop runs for each tail of the
+      ;; form being evaluated.
       (unwind-protect (block nil
                         (loop with segment := body do
                           (handler-case (progn (loop for item in segment do
                                                  (unless (symbolp item)
                                                    (evaluate item environment)))
+                                               ;; This RETURN is reached only if
+                                               ;; we fall off of the end of the
+                                               ;; TAGBODY.
                                                (return))
                             (go-condition (condition)
                               (let ((entry (go-condition-entry condition)))
                                 (if (eq (second entry) marker)
                                     (setf segment (rest (rest entry)))
                                     (signal condition)))))))
+        ;; Here we are performing a transfer of control out of the TAGBODY,
+        ;; meaning that its dynamic extent has ended.
         (setf (cdr marker) :invalid))))
   nil)
 
