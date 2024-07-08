@@ -542,7 +542,7 @@ of the results of evaluation."
         (condition (gensym)))
     `(let ((,tag (cons nil nil))) ; avoid stepping on anyone's toes
       (block nil
-        (signal (catch ,tag
+        (error (catch ,tag
                   (handler-case (destructuring-bind ,lambda-list ,expression
                                   (handler-case (return (progn ,@body))
                                     (error (,condition)
@@ -671,20 +671,23 @@ the last one."
 (define-special-operator tagbody (&rest body) environment
   (let ((marker (list nil)))
     (with-environment (environment) environment
+      ;; First collect the tags and the tail of the TAGBODY that they label.
       (loop for (first . rest) on body do
         (cond ((symbolp first)
                (bind-tag first marker rest environment))
               ((atom first)
                (warn "Non-symbol atom ~A in TAGBODY" first))))
-      (unwind-protect (loop with segment := body do
-                        (handler-case (loop for item in segment do
-                                        (unless (symbolp item)
-                                          (evaluate item environment)))
-                          (go-condition (condition)
-                            (let ((entry (go-condition-entry condition)))
-                              (if (eq (second entry) marker)
-                                  (setf segment (rest (rest entry)))
-                                  (signal condition))))))
+      (unwind-protect (block nil
+                        (loop with segment := body do
+                          (handler-case (progn (loop for item in segment do
+                                                 (unless (symbolp item)
+                                                   (evaluate item environment)))
+                                               (return))
+                            (go-condition (condition)
+                              (let ((entry (go-condition-entry condition)))
+                                (if (eq (second entry) marker)
+                                    (setf segment (rest (rest entry)))
+                                    (signal condition)))))))
         (setf (cdr marker) :invalid))))
   nil)
 
