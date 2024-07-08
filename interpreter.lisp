@@ -377,7 +377,7 @@ this function has already been called (to avoid redefinitions)."
                     (interpreter-apply function arguments)))
         (v 't t)
         (v 'nil nil)
-        (evaluate (read-file "prelude") *global-environment*)))))
+        (evaluate (read-file "prelude.nl") *global-environment*)))))
 
 (defun read-file (name)
   "Repeatedly read forms from the file named NAME, returning them enclosed in a
@@ -750,4 +750,4 @@ result of evaluating that form in the given environment."
   (initialize-global-environment)
   (evaluate (read-file file) *global-environment*))
 
-(run-file "tests")
+(run-file "tests.nl")
