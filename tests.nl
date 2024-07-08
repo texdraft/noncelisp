@@ -150,6 +150,9 @@
 (test (block-closure) 10)
 (test-error (exit))
 
+(test (tagbody) nil)
+(test (tagbody (progn t) (progn t) (progn t)) nil)
+
 (define (tagbody-test)
   (block nil
     (tagbody
