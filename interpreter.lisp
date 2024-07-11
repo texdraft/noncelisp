@@ -22,6 +22,11 @@ sequence of forms following the tag in the TAGBODY."
 macros are to be found and where top-level DEFINE/DEFINE-MACRO forms stash
 definitions.")
 
+(defvar *values* nil
+  "List of secondary values returned by last form executed. This list is
+invalidated at the beginning of every call to EVALUATE and is only modified by
+the interpreted function VALUES.")
+
 (defstruct (closure (:print-object print-closure))
   "The runtime representation of an interpreted function, containing its code
 and the surrounding lexical environment. If the function was defined by DEFINE
@@ -375,6 +380,9 @@ this function has already been called (to avoid redefinitions)."
         (f 'cerror)
         (f 'apply (lambda (function arguments)
                     (interpreter-apply function arguments)))
+        (f 'values (lambda (&rest arguments)
+                     (setf *values* (rest arguments))
+                     (first arguments)))
         (v 't t)
         (v 'nil nil)
         (evaluate (read-file "prelude.nl") *global-environment*)))))
@@ -406,10 +414,12 @@ PROGN."
                  test-error
                  return-from
                  define-macro
-                 unwind-protect)))
+                 unwind-protect
+                 multiple-value-call)))
 
 (defun evaluate (expression environment)
   "Evaluate an expression in the given lexical environment."
+  (setf *values* nil) ; invalidate values left by intervening computations
   (cond ((symbolp expression)
          (evaluate-symbol expression environment))
         ((atom expression) ; self-evaluating
@@ -715,6 +725,12 @@ the last one."
     (control-transfer (condition)
       (evaluate-progn cleanup-forms environment)
       (signal condition))))
+
+;; Based on SBCL's full-eval.lisp
+(define-special-operator multiple-value-call (function &rest forms) environment
+  (interpreter-apply (evaluate function environment)
+                     (loop for form in forms
+                           nconcing (cons (evaluate form environment) *values*))))
 
 (define-special-operator test (form result-form) environment
   (let* ((result (evaluate result-form environment))

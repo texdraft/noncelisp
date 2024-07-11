@@ -9,13 +9,12 @@
         (cons (first elements)
               (apply list (rest elements)))))
 
-(define list*
-  (lambda elements
-    (if (null? (rest elements))
+(define (list* . elements)
+  (if (null? (rest elements))
         (first elements)
         (if (null? (rest (rest elements)))
             (cons (first elements) (second elements))
-            (cons (first elements) (apply list* (rest elements)))))))
+            (cons (first elements) (apply list* (rest elements))))))
 
 (define (map f l)
   (if (null? l)
@@ -81,3 +80,6 @@
 
 (define-macro (return b)
   (list* 'return-from nil b))
+
+(define-macro (multiple-value-list b)
+  (list* 'multiple-value-call 'list b))

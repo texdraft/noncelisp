@@ -31,6 +31,19 @@
           y))
       1)
 
+(test (multiple-value-list (values 'a 'b)) (list 'a 'b))
+
+(define (+- n)
+  (values n (- n)))
+
+(test (multiple-value-list (+- 5)) (list 5 -5))
+
+(test (multiple-value-list (progn t t t t (+- 5))) (list 5 -5))
+(test (multiple-value-list (progn (progn (progn (progn (values 1 2 3))))))
+      (list 1 2 3))
+
+(test (multiple-value-list (values (values 1 2 3))) (list 1))
+
 (define variable 'value)
 (test variable 'value)
 (setq variable 'value2)
