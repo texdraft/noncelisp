@@ -400,22 +400,7 @@ PROGN."
 
 (defun interpreter-special-operator-p (name)
   "Is the given name defined as a special operator?"
-  (member name '(go
-                 if
-                 let
-                 let*
-                 setq
-                 test
-                 block
-                 progn
-                 quote
-                 define
-                 tagbody
-                 test-error
-                 return-from
-                 define-macro
-                 unwind-protect
-                 multiple-value-call)))
+  (and (symbolp name) (get name :special-operator)))
 
 (defun evaluate (expression environment)
   "Evaluate an expression in the given lexical environment."
