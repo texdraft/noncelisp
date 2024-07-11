@@ -749,11 +749,16 @@ result of evaluating that form in the given environment."
                     (loop (incf counter)
                           (format output "~&[~D]: " counter)
                           (finish-output output)
-                          (let ((value (evaluate (read input) environment)))
-                            (bind-variable (intern (format nil "$~D" counter))
-                                           value
-                                           environment)
-                            (format output "$~D = ~A~%" counter value))))
+                          (let ((value (evaluate (read input) environment))
+                                (value-name (intern (format nil "$~D" counter)))
+                                (values-name (intern (format nil "$~D/" counter))))
+                            (bind-variable value-name value environment)
+                            (bind-variable values-name (cons value *values*) environment)
+                            (format output "~A = ~A~%" value-name value)
+                            (loop for v in *values* do
+                              (format output "~vT~A~%"
+                                             (floor (+ (log counter 10) 5))
+                                             v)))))
       (end-of-file (condition)
         (declare (ignore condition))
         (write-line "Bye." output)))))
